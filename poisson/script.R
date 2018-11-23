@@ -10,14 +10,14 @@ season2016 <- subset(season2015, select = c("HomeTeam", "AwayTeam", "FTR"))
 season2017 <- subset(season2015, select = c("HomeTeam", "AwayTeam", "FTR"))
 season2018 <- subset(season2015, select = c("HomeTeam", "AwayTeam", "FTR"))
 
-expanded2015 <- gnm::expandCategorical(season2015, "FTR", idvar = "match")
+expanded2018 <- gnm::expandCategorical(season2018, "FTR", idvar = "match")
 
 ## See the overview document for `gnm`, for the details of how to use
 ## a Poisson log-linear model to get the MLE for a multinomial response model
 ## (here, multinomial with 3 outcome categories)
 ## -- the so-called "Poisson trick".
 
-Davidson2015 <- fitDavidson(expanded2015, coefs = TRUE)
-
+Davidson2018 <- fitDavidson(expanded2018, coefs = TRUE)
+Davidson2018
 
 

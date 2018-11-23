@@ -1,4 +1,4 @@
-makeX <- function(season.data, power = 1/2){
+makeX <- function(season.data, power = 1/3){
     X <- matrix(0,
                 nrow(season.data),
                 length(levels(factor(as.character(season.data$AwayTeam)))))
@@ -13,7 +13,7 @@ makeX <- function(season.data, power = 1/2){
 }
 
 fitDavidson <- function(season.data, coefs = TRUE){
-    season.data$X <- makeX(season.data, power = 1/2)
+    season.data$X <- makeX(season.data, power = 1/3)
     nteams <- ncol(season.data$X)
     season.data$home <- as.numeric(season.data$FTR == "H")
     season.data$draw <- as.numeric(season.data$FTR == "D")
