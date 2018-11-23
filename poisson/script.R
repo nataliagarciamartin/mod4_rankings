@@ -20,4 +20,5 @@ expanded2019 <- gnm::expandCategorical(season2019, "FTR", idvar = "match")
 Davidson2019 <- fitDavidson(expanded2019, coefs = TRUE)
 Davidson2019
 
-
+Davidson2019_noadv <- fitDavidson_noadvantage(expanded2019, coefs = TRUE)
+Davidson2019_noadv
