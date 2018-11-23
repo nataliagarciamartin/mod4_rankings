@@ -1,9 +1,9 @@
 library(gnm)
 
-season2015 <- read.csv("Data/pl_results_15_16.csv")
-season2016 <- read.csv("Data/pl_results_16_17.csv")
-season2017 <- read.csv("Data/pl_results_17_18.csv")
-season2018 <- read.csv("Data/pl_results_18_19.csv")
+season2015 <- read.csv("data/pl_results_15_16.csv")
+season2016 <- read.csv("data/pl_results_16_17.csv")
+season2017 <- read.csv("data/pl_results_17_18.csv")
+season2018 <- read.csv("data/pl_results_18_19.csv")
 
 season2015 <- subset(season2015, select = c("HomeTeam", "AwayTeam", "FTR"))
 season2016 <- subset(season2015, select = c("HomeTeam", "AwayTeam", "FTR"))
