@@ -46,10 +46,9 @@ fitDavidson_noadvantage <- function(season.data, coefs = TRUE){
   
   thecoefs <- coef(thefit)
   names(thecoefs)[1:nteams] <- colnames(season.data$X)
-  home <- thecoefs[nteams + 1]
-  draw <- thecoefs[nteams + 2]
+  draw <- thecoefs[nteams + 1]
   abilities <- rev(sort(thecoefs[1:nteams]))
   abilities <- abilities - mean(abilities)
-  if (coefs) return(c(abilities, home, draw))   ## all on the log scale
+  if (coefs) return(c(abilities, draw))   ## all on the log scale
   else return(thefit)
 }
