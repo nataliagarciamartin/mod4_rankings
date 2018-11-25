@@ -94,7 +94,7 @@ makeRKData = function(model_data, a = NULL, g = NULL, t = NULL){
 ######### Function to fit all Stan models ########
 fitAllModels = function(data){
   
-  #### DAVIDSON
+  #### DAVIDSON - 1/3 power
   cat(paste0("\n",Sys.time(),"\tFitting Davidson...\n"))
   fit_davidson = stan(file = 'bayesian-implementation/davidson.stan'
                       , data = makeDavidsonData(data)
@@ -104,6 +104,17 @@ fitAllModels = function(data){
                       , cores = 2
                       , refresh = 0)
   print(fit_davidson)
+  
+  #### DAVIDSON - power param
+  cat(paste0("\n",Sys.time(),"\tFitting Davidson power...\n"))
+  fit_davidson_power = stan(file = 'bayesian-implementation/davidson-power.stan'
+                      , data = makeDavidsonData(data)
+                      , chains = 4
+                      , warmup = 1000
+                      , iter = 2000
+                      , cores = 2
+                      , refresh = 0)
+  print(fit_davidson_power)
   
   #### DAVIDSON-BEAVER
   cat(paste0("\n",Sys.time(),"\tFitting Davidson-Beaver...\n"))
@@ -140,6 +151,7 @@ fitAllModels = function(data){
   print(fit_RK_mult)
   
   return(list("Davidson" = fit_davidson
+              , "Davidson Power" = fit_davidson
               , "Davidson-Beaver" = fit_davidson_beaver
               , "Rao-Kupper" = fit_RK
               , "Rao-Kupper Mult" = fit_RK_mult))
@@ -154,4 +166,50 @@ getFit = function(stan_fit){
   fit_sum = setDT(data.frame(param = rownames(fit_sum), fit_sum))
   
   return(fit_sum)
+}
+
+
+
+
+##### Get posterior predictions #####
+
+getPredStats = function(model, actual){
+  predicted = extract(model)$result_hat
+  
+  by_game = rbindlist(lapply(1:length(actual), function(g){
+    data.frame(actual = actual[g]
+               , 'win_i' = sum(predicted[,g] == 1)
+               , 'win_j' = sum(predicted[,g] == 2)
+               , 'draw' = sum(predicted[,g] == 3)
+               , n_correct = sum(predicted[,g] == actual[g])
+               , prop_correct = mean(predicted[,g] == actual[g])
+    )
+  }))
+  
+  class_rate = sum(by_game$n_correct)/(4000*nrow(by_game))
+  
+  n_draws = apply(predicted, 1, function(g) sum(g == 3))
+  
+  home_wins = apply(predicted, 1, function(g) sum(g == 1))
+  
+  
+  standings = apply(extract(fit_davidson)$result_hat, 1, function(g) {
+    points_i = (g == 1) * 3 + (g == 3) * 1 
+    points_j = (g == 2) * 3 + (g == 3) * 1
+    
+    data.table(rbind(cbind(team_i = data1718$games$HomeTeam, points = points_i)
+                     , cbind(team_i = data1718$games$AwayTeam, points = points_j)))
+  })
+  
+  top_team = lapply(standings, function(x) {
+    x[, .(points = sum(points)), by = team_i][order(points, decreasing = T)][1,]
+  })
+  
+  return(list(by_game = by_game
+              , class_rate = class_rate
+              , n_draws = n_draws
+              , home_wins = home_wins
+              , top_team = top_team$team_i
+              , top_team_points = top_team$points
+              ))
 }
