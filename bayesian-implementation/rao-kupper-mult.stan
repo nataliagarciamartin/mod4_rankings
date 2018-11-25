@@ -12,6 +12,7 @@ data {
   // Prior dist params
   vector[K] a;      // hyperparam for param alpha prior
   real g;           // hyperparam for param gamma prior
+  real t;         // hyperparam for home advantage param
 }
 
 parameters {
@@ -20,6 +21,9 @@ parameters {
   
   // vector of strength param
   simplex[K] alpha;  
+  
+  // home team advantage param
+  real<lower = 0> theta;
   
 }
 
@@ -39,13 +43,16 @@ model {
   // exp prior for nu
   gamma_bar ~ exponential(g);
   
+  // exp prior for theta
+  theta ~ exponential(t);
+  
   // dirichlet prior for alpha
   alpha ~ dirichlet(a);
   
   //loop over all the games
   for(r in 1:N){
     
-    alpha_i = alpha[team_i[r]];
+    alpha_i = alpha[team_i[r]] * theta;
     alpha_j = alpha[team_j[r]];
     
     outcome_probs[r][1] = alpha_i / (alpha_i + alpha_j * gamma);

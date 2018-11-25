@@ -14,6 +14,7 @@ data {
   vector[K] a;     // hyperparam vector for alpha prior
   real d;    // hyperparam for delta prevalence of draws parameter
   real b;   //hyperparam for beta power parameter
+  real t;         // hyperparam for home advantage param
 }
 
 parameters {
@@ -25,6 +26,9 @@ parameters {
   
   // vector of strength param
   simplex[K] alpha;  
+  
+  // home advantage param
+  real<lower = 0> theta;
   
 }
 
@@ -47,16 +51,19 @@ model {
   // dirichlet prior for alpha (strength)
   alpha ~ dirichlet(a);
   
+  // exp prior for beta (power)
+  theta ~ exponential(t);
+  
   //loop over all the games
   for(r in 1:N){
     
     alpha_i = alpha[team_i[r]];
     alpha_j = alpha[team_j[r]];
     
-    mean_strength = delta * (alpha_i * alpha_j) ^ beta;
-    denom = alpha_i + alpha_j + mean_strength;
+    mean_strength = delta * (theta * alpha_i * alpha_j) ^ beta;
+    denom = (theta * alpha_i) + alpha_j + mean_strength;
     
-    outcome_probs[r][1] = alpha_i / denom;
+    outcome_probs[r][1] = theta * alpha_i / denom;
     outcome_probs[r][2] = alpha_j / denom;
     outcome_probs[r][3] = mean_strength / denom;
     
