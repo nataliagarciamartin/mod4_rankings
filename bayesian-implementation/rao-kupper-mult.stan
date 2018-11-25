@@ -29,16 +29,29 @@ parameters {
 
 transformed parameters{
   real<lower = 1> gamma;
+  vector[3] outcome_probs[N];
+  
   gamma = gamma_bar + 1;
+  
+  
+    for(r in 1:N){
+      
+      real alpha_i;
+      real alpha_j;
+    
+      alpha_i = alpha[team_i[r]] * theta;
+      alpha_j = alpha[team_j[r]];
+      
+      outcome_probs[r][1] = alpha_i / (alpha_i + alpha_j * gamma);
+      outcome_probs[r][2] = alpha_j / (alpha_i * gamma + alpha_j);
+      outcome_probs[r][3] = (gamma ^ 2 - 1) * alpha_i * alpha_j/((alpha_i + alpha_j * gamma) * (alpha_i * gamma + alpha_j));
+    
+  }
 }
 
 
 
 model {
-  
-  vector[3] outcome_probs[N];
-  real alpha_i;
-  real alpha_j;
   
   // exp prior for nu
   gamma_bar ~ exponential(g);
@@ -51,17 +64,18 @@ model {
   
   //loop over all the games
   for(r in 1:N){
-    
-    alpha_i = alpha[team_i[r]] * theta;
-    alpha_j = alpha[team_j[r]];
-    
-    outcome_probs[r][1] = alpha_i / (alpha_i + alpha_j * gamma);
-    outcome_probs[r][2] = alpha_j / (alpha_i * gamma + alpha_j);
-    outcome_probs[r][3] = (gamma ^ 2 - 1) * alpha_i * alpha_j/((alpha_i + alpha_j * gamma) * (alpha_i * gamma + alpha_j));
-    
     result[r] ~ categorical(outcome_probs[r]);
   }
   
+}
+
+
+generated quantities{
+  int result_hat[N];
+  
+  for(r in 1:N){
+    result_hat[r] = categorical_rng(outcome_probs[r]);
+  }
 }
 
 
