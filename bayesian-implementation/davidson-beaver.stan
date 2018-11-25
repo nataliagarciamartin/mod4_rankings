@@ -33,29 +33,14 @@ parameters {
 }
 
 
-
-model {
-  
+transformed parameters{
   vector[3] outcome_probs[N];
-  real mean_strength;
-  real denom;
-  real alpha_i;
-  real alpha_j;
   
-  // exp prior for delta (draws)
-  delta ~ exponential(d);
-  
-  // exp prior for beta (power)
-  beta ~ exponential(b);
-  
-  // dirichlet prior for alpha (strength)
-  alpha ~ dirichlet(a);
-  
-  // exp prior for beta (power)
-  theta ~ exponential(t);
-  
-  //loop over all the games
   for(r in 1:N){
+    real mean_strength;
+    real denom;
+    real alpha_i;
+    real alpha_j;
     
     alpha_i = alpha[team_i[r]];
     alpha_j = alpha[team_j[r]];
@@ -67,7 +52,36 @@ model {
     outcome_probs[r][2] = alpha_j / denom;
     outcome_probs[r][3] = mean_strength / denom;
     
+  }
+}
+
+
+model {
+  
+  // exp prior for delta (draws)
+  delta ~ exponential(d);
+  
+  // exp prior for beta (power)
+  beta ~ exponential(b);
+  
+  // dirichlet prior for alpha (strength)
+  alpha ~ dirichlet(a);
+  
+  // exp prior for theta (home adv)
+  theta ~ exponential(t);
+  
+  //loop over all the games
+  for(r in 1:N){
     result[r] ~ categorical(outcome_probs[r]);
+  }
+}
+
+
+generated quantities{
+  int result_hat[N];
+  
+  for(r in 1:N){
+    result_hat[r] = categorical_rng(outcome_probs[r]);
   }
 }
 
