@@ -2,10 +2,15 @@
 library(rstan)
 library(data.table)
 library(ggplot2)
+library(shinystan)
+library(rethinking)
+# devtools::install_github("rmcelreath/rethinking")
 
 #set working directory and source functions
 setwd("~/github/ranking-ties/")
 source("bayesian-implementation/functions.R")
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores() - 1)
 
 
 ############################
@@ -77,7 +82,76 @@ lapply(names(all_1516_models), function(f){
 ############################
 
 
-all_fit_sums = lapply(all_fits, getFit)
+# check model fit
+
+launch_shinystan(fit_davidson)
+
+
+fit_davidson = stan(file = 'bayesian-implementation/davidson.stan'
+                    , data = makeDavidsonData(data1718)
+                    , chains = 4
+                    , warmup = 1000
+                    , iter = 2000
+                    , cores = 2
+                    , refresh = 0)
+print(fit_davidson)
+
+fit_davidson_beaver = stan(file = 'bayesian-implementation/davidson-beaver.stan'
+                    , data = makeDavidsonData(data1718, t = 1)
+                    , chains = 4
+                    , warmup = 1000
+                    , iter = 2000
+                    , cores = 2
+                    , refresh = 0)
+print(fit_davidson_beaver)
+
+
+fit_RK = stan(file = 'bayesian-implementation/rao-kupper.stan'
+                    , data = makeRKData(data1718)
+                    , chains = 4
+                    , warmup = 1000
+                    , iter = 2000
+                    , cores = 2
+                    , refresh = 0)
+print(fit_RK)
+
+fit_RK_mult = stan(file = 'bayesian-implementation/rao-kupper-mult.stan'
+                   , data = makeRKData(data1718, t = 1)
+                   , chains = 4
+                   , warmup = 1000
+                   , iter = 2000
+                   , cores = 2
+                   , refresh = 0)
+print(fit_RK_mult)
+
+
+actual = makeDavidsonData(data1718)$result
+
+pred_davidson = getPostPred(model = fit_davidson, actual = actual)
+pred_davidson_beaver = getPostPred(model = fit_davidson_beaver, actual = actual)
+pred_rk = getPostPred(model = fit_RK, actual = actual)
+pred_rk_mult = getPostPred(model = fit_RK_mult, actual = actual)
+
+
+#classification rate
+
+getPredStats(fit_davidson, actual = actual)
+
+
+
+
+ggplot(data.frame(num_draws = num_draws)) + 
+  geom_histogram(aes(num_draws)) + 
+  geom_vline(xintercept = sum(actual == 3))
+
+
+ggplot(data.frame(home_wins = home_wins)) + 
+  geom_histogram(aes(home_wins)) + 
+  geom_vline(xintercept = sum(actual == 1))
+
+
+
+all_fit_sums = lapply(all_1516_models, getFit)
 #all_fit_sums = Reduce(function(...) merge(..., all=T, by = 'param'), all_fit_sums)
 all_fit_sums
 
@@ -94,6 +168,7 @@ ggplot(all_fit_sums[grepl('alpha', param)], aes(x = name, y = mean, color = mode
 
 
 
+
 all_fit_sums_1819 = lapply(all_1819_models, getFit)
 
 all_fit_sums_1819 = do.call(rbind, lapply(names(all_fit_sums_1819), function(x) cbind(model = x, all_fit_sums_1819[[x]])))
@@ -105,3 +180,4 @@ all_fit_sums_1819 = merge(all_fit_sums_1819, data1819$teams, by.x = 'team_num', 
 ggplot(all_fit_sums_1819[grepl('alpha', param)], aes(x = name, y = mean, color = model)) + 
   geom_point() + theme(axis.text.x = element_text(angle = 45 , hjust = 1))
 
+lapply(all_1718_models, print)
