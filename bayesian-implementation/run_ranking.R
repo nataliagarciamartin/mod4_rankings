@@ -35,7 +35,6 @@ all_model_data = lapply(all_results, makeModelData)
 ######### Fit 17-18 season models  #########
 data1718 = all_model_data[['season_17_18']]
 all_1718_models = fitAllModels(data1718)
-names(all_1718_models) = c("Davidson", "Davidson-Beaver", "Rao-Kupper", "Rao-Kupper Mult")
 
 lapply(names(all_1718_models), function(f){
   print(f)

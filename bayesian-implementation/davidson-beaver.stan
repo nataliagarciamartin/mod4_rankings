@@ -13,16 +13,12 @@ data {
   // Prior dist params
   vector[K] a;     // hyperparam vector for alpha prior
   real d;    // hyperparam for delta prevalence of draws parameter
-  real b;   //hyperparam for beta power parameter
   real t;         // hyperparam for home advantage param
 }
 
 parameters {
   // draw param
   real<lower = 0> delta;           
-  
-  // power param
-  real<lower = 0> beta;
   
   // vector of strength param
   simplex[K] alpha;  
@@ -45,7 +41,7 @@ transformed parameters{
     alpha_i = alpha[team_i[r]];
     alpha_j = alpha[team_j[r]];
     
-    mean_strength = delta * (theta * alpha_i * alpha_j) ^ beta;
+    mean_strength = delta * (theta * alpha_i * alpha_j) ^ (0.33333);
     denom = (theta * alpha_i) + alpha_j + mean_strength;
     
     outcome_probs[r][1] = theta * alpha_i / denom;
@@ -60,9 +56,6 @@ model {
   
   // exp prior for delta (draws)
   delta ~ exponential(d);
-  
-  // exp prior for beta (power)
-  beta ~ exponential(b);
   
   // dirichlet prior for alpha (strength)
   alpha ~ dirichlet(a);
