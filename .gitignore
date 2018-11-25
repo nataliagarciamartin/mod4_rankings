@@ -1,2 +1,6 @@
 
 bayesian-implementation/model_fits/*
+.Rproj
+.Rhistory
+.RData
+.Ruserdata
