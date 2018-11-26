@@ -11,7 +11,7 @@ data {
   int result[N];  // 1 if i wins, 2 is j wins and 3 if draw
   
   // Prior dist params
-  vector[K] a;     // hyperparam vector for alpha prior
+  real sigma_hat; //hyperparam for lambda dist
   real d;    // hyperparam for delta prevalence of draws parameter
   real b;   //hyperparam for beta power parameter
   real t;   //hyperparam for theta home adv parameter
@@ -28,7 +28,9 @@ parameters {
   real<lower = 0> theta;
   
   // vector of strength param
-  simplex[K] alpha;  
+  vector[K] lambda;  
+  
+  real sigma;
   
   
 }
@@ -36,6 +38,9 @@ parameters {
 
 transformed parameters{
   vector[3] outcome_probs[N];
+  vector[K] alpha;
+  
+  alpha = exp(lambda);
   
   for(r in 1:N){
     real mean_strength;
@@ -58,6 +63,7 @@ transformed parameters{
 
 
 model {
+  matrix[K, K] Sigma;
   
   // exp prior for delta (draws)
   delta ~ exponential(d);
@@ -65,11 +71,14 @@ model {
   // exp prior for beta (power)
   beta ~ exponential(b);
   
-  // dirichlet prior for alpha (strength)
-  alpha ~ dirichlet(a);
-  
   // exp prior for theta (home adv)
   theta ~ exponential(t);
+  
+  // multivariate norm prior for alpha (strength)
+  sigma ~ gamma(2*K, 2*K/sigma_hat^2);
+  Sigma = diag_matrix(rep_vector(sigma ^ 2, K));
+  
+  lambda ~ multi_normal(rep_vector(0, K), Sigma);
   
   //loop over all the games
   for(r in 1:N){
