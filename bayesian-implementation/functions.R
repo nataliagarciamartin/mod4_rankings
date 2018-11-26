@@ -39,15 +39,15 @@ makeModelData = function(raw_data){
 
 
 ## Make data for Davidson
-makeDavidsonData = function(model_data, a = NULL, d = NULL, b = NULL, t = NULL){
+makeDavidsonData = function(model_data, sigma_hat = NULL, d = NULL, b = NULL, t = NULL){
   
   #pull oout data tables
   teams = model_data$teams
   games = model_data$games
   
   #flat prior if prior is null
-  if(is.null(a)){
-    a = rep(1, nrow(teams))/nrow(teams)
+  if(is.null(sigma_hat)){
+    sigma_hat = 0.2
   }
   
   return(list(
@@ -56,7 +56,7 @@ makeDavidsonData = function(model_data, a = NULL, d = NULL, b = NULL, t = NULL){
     , team_i = games$HomeTeam
     , team_j = games$AwayTeam
     , result = games$result
-    , a = a
+    , sigma_hat = sigma_hat
     , d = ifelse(is.null(d), 1, d)
     , b = ifelse(is.null(b), 1, b)
     , t = t
@@ -66,15 +66,15 @@ makeDavidsonData = function(model_data, a = NULL, d = NULL, b = NULL, t = NULL){
 
 
 ## Make data for RK
-makeRKData = function(model_data, a = NULL, g = NULL, t = NULL){
+makeRKData = function(model_data, sigma_hat = NULL, g = NULL, t = NULL){
   
   #pull oout data tables
   teams = model_data$teams
   games = model_data$games
   
   #flat prior if prior is null
-  if(is.null(a)){
-    a = rep(1, nrow(teams))/nrow(teams)
+  if(is.null(sigma_hat)){
+    sigma_hat = 0.3
   }
   
   return(list(
@@ -83,7 +83,7 @@ makeRKData = function(model_data, a = NULL, g = NULL, t = NULL){
     , team_i = games$HomeTeam
     , team_j = games$AwayTeam
     , result = games$result
-    , a = a
+    , sigma_hat = sigma_hat
     , g = ifelse(is.null(g), 1, g)
     , t = t
   ))
