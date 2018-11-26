@@ -4,3 +4,4 @@ bayesian-implementation/model_fits/*
 .Rhistory
 .RData
 .Ruserdata
+*.rds
