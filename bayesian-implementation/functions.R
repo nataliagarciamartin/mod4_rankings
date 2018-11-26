@@ -92,69 +92,89 @@ makeRKData = function(model_data, a = NULL, g = NULL, t = NULL){
 
 
 ######### Function to fit all Stan models ########
-fitAllModels = function(data){
+fitAllModels = function(data, which_models = 'all'){
+  
+  results = list()
   
   #### DAVIDSON - 1/3 power
-  cat(paste0("\n",Sys.time(),"\tFitting Davidson...\n"))
-  fit_davidson = stan(file = 'bayesian-implementation/davidson.stan'
-                      , data = makeDavidsonData(data)
-                      , chains = 4
-                      , warmup = 1000
-                      , iter = 2000
-                      , cores = 2
-                      , refresh = 0)
-  print(fit_davidson)
+  if('davidson' %in% which_models | which_models == 'all'){
+    cat(paste0("\n",Sys.time(),"\tFitting Davidson...\n"))
+    fit_davidson = stan(file = 'bayesian-implementation/davidson.stan'
+                        , data = makeDavidsonData(data)
+                        , chains = 4
+                        , warmup = 1000
+                        , iter = 2000
+                        , cores = 2
+                        , refresh = 0)
+    print(fit_davidson)
+    
+    results[["Davidson"]] = fit_davidson
+  }
+
   
-  #### DAVIDSON - power param
-  cat(paste0("\n",Sys.time(),"\tFitting Davidson power...\n"))
-  fit_davidson_power = stan(file = 'bayesian-implementation/davidson-power.stan'
-                      , data = makeDavidsonData(data)
-                      , chains = 4
-                      , warmup = 1000
-                      , iter = 2000
-                      , cores = 2
-                      , refresh = 0)
-  print(fit_davidson_power)
   
   #### DAVIDSON-BEAVER
-  cat(paste0("\n",Sys.time(),"\tFitting Davidson-Beaver...\n"))
-  fit_davidson_beaver = stan(file = 'bayesian-implementation/davidson-beaver.stan'
-                             , data = makeDavidsonData(data, t = 1)  #need to specify prior for t
-                             , chains = 4
-                             , warmup = 1000
-                             , iter = 2000
-                             , cores = 2
-                             , refresh = 0)
-  print(fit_davidson_beaver)
+  if('davidson-beaver' %in% which_models | which_models == 'all'){
+    cat(paste0("\n",Sys.time(),"\tFitting Davidson-Beaver...\n"))
+    fit_davidson_beaver = stan(file = 'bayesian-implementation/davidson-beaver.stan'
+                               , data = makeDavidsonData(data, t = 1)  #need to specify prior for t
+                               , chains = 4
+                               , warmup = 1000
+                               , iter = 2000
+                               , cores = 2
+                               , refresh = 0)
+    print(fit_davidson_beaver)
+    
+    results[["Davidson-Beaver"]] = fit_davidson_beaver
+  }
+  
+  #### DAVIDSON - power param
+  if('davidson-power' %in% which_models | which_models == 'all'){
+    cat(paste0("\n",Sys.time(),"\tFitting Davidson power...\n"))
+    fit_davidson_power = stan(file = 'bayesian-implementation/davidson-power.stan'
+                              , data = makeDavidsonData(data, t = 1)
+                              , chains = 4
+                              , warmup = 1000
+                              , iter = 2000
+                              , cores = 2
+                              , refresh = 0)
+    print(fit_davidson_power)
+    
+    results[["Davidson Power"]] = fit_davidson_power
+  }
   
   
   ## RAO-KUPPER
-  cat(paste0("\n",Sys.time(),"\tFitting Rao-Kupper\n"))
-  fit_RK = stan(file = 'bayesian-implementation/rao-kupper.stan'
-                , data = makeRKData(data)
-                , chains = 4
-                , warmup = 1000
-                , iter = 2000
-                , cores = 2
-                , refresh = 0)
-  print(fit_RK)
+  if('rao-kupper' %in% which_models | which_models == 'all'){
+    cat(paste0("\n",Sys.time(),"\tFitting Rao-Kupper\n"))
+    fit_RK = stan(file = 'bayesian-implementation/rao-kupper.stan'
+                  , data = makeRKData(data)
+                  , chains = 4
+                  , warmup = 1000
+                  , iter = 2000
+                  , cores = 2
+                  , refresh = 0)
+    print(fit_RK)
+    
+    results[["Rao-Kupper"]] = fit_RK
+  }
   
   # RAO-KUPPER WITH HOME ADVANTAGE
-  cat(paste0("\n",Sys.time(),"\tFitting Rao-Kupper Mult\n"))
-  fit_RK_mult = stan(file = 'bayesian-implementation/rao-kupper-mult.stan'
-                     , data = makeRKData(data, t = 1)
-                     , chains = 4
-                     , warmup = 1000
-                     , iter = 2000
-                     , cores = 2
-                     , refresh = 0)
-  print(fit_RK_mult)
+  if('rao-kupper-mult' %in% which_models | which_models == 'all'){
+    cat(paste0("\n",Sys.time(),"\tFitting Rao-Kupper Mult\n"))
+    fit_RK_mult = stan(file = 'bayesian-implementation/rao-kupper-mult.stan'
+                       , data = makeRKData(data, t = 1)
+                       , chains = 4
+                       , warmup = 1000
+                       , iter = 2000
+                       , cores = 2
+                       , refresh = 0)
+    print(fit_RK_mult)
+    
+    results[["Rao-Kupper Mult"]] = fit_RK_mult
+  }
   
-  return(list("Davidson" = fit_davidson
-              , "Davidson Power" = fit_davidson
-              , "Davidson-Beaver" = fit_davidson_beaver
-              , "Rao-Kupper" = fit_RK
-              , "Rao-Kupper Mult" = fit_RK_mult))
+  return(results)
 }
 
 
