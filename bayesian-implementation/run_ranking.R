@@ -86,44 +86,6 @@ lapply(names(all_1516_models), function(f){
 launch_shinystan(fit_davidson)
 
 
-fit_davidson = stan(file = 'bayesian-implementation/davidson.stan'
-                    , data = makeDavidsonData(data1718)
-                    , chains = 4
-                    , warmup = 1000
-                    , iter = 2000
-                    , cores = 2
-                    , refresh = 0)
-print(fit_davidson)
-
-fit_davidson_beaver = stan(file = 'bayesian-implementation/davidson-beaver.stan'
-                    , data = makeDavidsonData(data1718, t = 1)
-                    , chains = 4
-                    , warmup = 1000
-                    , iter = 2000
-                    , cores = 2
-                    , refresh = 0)
-print(fit_davidson_beaver)
-
-
-fit_RK = stan(file = 'bayesian-implementation/rao-kupper.stan'
-                    , data = makeRKData(data1718)
-                    , chains = 4
-                    , warmup = 1000
-                    , iter = 2000
-                    , cores = 2
-                    , refresh = 0)
-print(fit_RK)
-
-fit_RK_mult = stan(file = 'bayesian-implementation/rao-kupper-mult.stan'
-                   , data = makeRKData(data1718, t = 1)
-                   , chains = 4
-                   , warmup = 1000
-                   , iter = 2000
-                   , cores = 2
-                   , refresh = 0)
-print(fit_RK_mult)
-
-
 actual = makeDavidsonData(data1718)$result
 
 pred_davidson = getPostPred(model = fit_davidson, actual = actual)
