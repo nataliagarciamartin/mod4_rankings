@@ -92,12 +92,12 @@ makeRKData = function(model_data, sigma_hat = NULL, g = NULL, t = NULL){
 
 
 ######### Function to fit all Stan models ########
-fitAllModels = function(data, which_models = 'all'){
+fitAllModels = function(data, which_models = c('all')){
   
   results = list()
   
   #### DAVIDSON - 1/3 power
-  if('davidson' %in% which_models | which_models == 'all'){
+  if(('davidson' %in% tolower(which_models)) | which_models == 'all'){
     cat(paste0("\n",Sys.time(),"\tFitting Davidson...\n"))
     fit_davidson = stan(file = 'bayesian-implementation/davidson.stan'
                         , data = makeDavidsonData(data)
@@ -114,7 +114,7 @@ fitAllModels = function(data, which_models = 'all'){
   
   
   #### DAVIDSON-BEAVER
-  if('davidson-beaver' %in% which_models | which_models == 'all'){
+  if(('davidson-beaver' %in% tolower(which_models)) | which_models == 'all'){
     cat(paste0("\n",Sys.time(),"\tFitting Davidson-Beaver...\n"))
     fit_davidson_beaver = stan(file = 'bayesian-implementation/davidson-beaver.stan'
                                , data = makeDavidsonData(data, t = 1)  #need to specify prior for t
@@ -129,7 +129,7 @@ fitAllModels = function(data, which_models = 'all'){
   }
   
   #### DAVIDSON - power param
-  if('davidson-power' %in% which_models | which_models == 'all'){
+  if(('davidson-power' %in% tolower(which_models)) | which_models == 'all'){
     cat(paste0("\n",Sys.time(),"\tFitting Davidson power...\n"))
     fit_davidson_power = stan(file = 'bayesian-implementation/davidson-power.stan'
                               , data = makeDavidsonData(data, t = 1)
@@ -145,7 +145,7 @@ fitAllModels = function(data, which_models = 'all'){
   
   
   ## RAO-KUPPER
-  if('rao-kupper' %in% which_models | which_models == 'all'){
+  if(('rao-kupper' %in% tolower(which_models)) | which_models == 'all'){
     cat(paste0("\n",Sys.time(),"\tFitting Rao-Kupper\n"))
     fit_RK = stan(file = 'bayesian-implementation/rao-kupper.stan'
                   , data = makeRKData(data)
@@ -160,7 +160,7 @@ fitAllModels = function(data, which_models = 'all'){
   }
   
   # RAO-KUPPER WITH HOME ADVANTAGE
-  if('rao-kupper-mult' %in% which_models | which_models == 'all'){
+  if(('rao-kupper-mult' %in% tolower(which_models)) | which_models == 'all'){
     cat(paste0("\n",Sys.time(),"\tFitting Rao-Kupper Mult\n"))
     fit_RK_mult = stan(file = 'bayesian-implementation/rao-kupper-mult.stan'
                        , data = makeRKData(data, t = 1)

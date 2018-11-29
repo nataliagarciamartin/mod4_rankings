@@ -57,7 +57,7 @@ model {
   matrix[K, K] Sigma;
   
   // exp prior for delta (draws)
-  delta ~ exponential(d);
+  delta ~ lognormal(0, 0.25);
   
   // multivariate norm prior for alpha (strength)
   sigma ~ gamma(2*K, 2*K/sigma_hat^2);

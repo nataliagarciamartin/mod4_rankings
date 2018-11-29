@@ -5,27 +5,237 @@
 
 options(knitr.kable.NA = '-')
 
+library(gridExtra)
+
 #load models
 fit = load('bayesian-implementation/model_fits/s1718_Rao-Kupper Mult.rds')
 fit_s1718_rkmult = get(fit)
 rm(fit)
 
-# check model fit
+##########################
+##### check model fit ####
+##########################
 
 #### Post predictive power
 actual = makeDavidsonData(data1718)$result
 
-pred_davidson = getPredStats(model = all_1718_models[['Davidson']], actual = actual)
-pred_davidson_beaver = getPredStats(model = all_1718_models[['Davidson-Beaver']], actual = actual)
-pred_davidson_power = getPredStats(model = all_1718_models[['Davidson Power']], actual = actual)
-pred_rk = getPredStats(model = all_1718_models[['Rao-Kupper']], actual = actual)
-pred_rk_mult = getPredStats(model = all_1718_models[['Rao-Kupper Mult']], actual = actual)
-
+## get PPD stats
 all_1718_pred = lapply(all_1718_models, getPredStats, actual = actual)
+
+## classfication rate
 class_rate = unlist(lapply(all_1718_pred, function(c) c$class_rate))
 
+# export table
 kable(data.frame(Model = names(class_rate)
                    , 'Classification Rate' = paste(round(class_rate * 100,2), '%')), format = 'latex', booktabs = T)
+
+#### Aux test stats
+
+### Home wins
+pdf(file = "bayesian-implementation/plots/ppd_home_wins.pdf", width = 10, height = 4)
+multiplot(
+  ggplot(data.frame(home_wins = all_1718_pred[['Davidson']]$home_wins)) + 
+    geom_histogram(aes(x = home_wins)) +
+    geom_vline(xintercept = sum(actual == 1), lty = 2, color = 'red') +
+    theme_classic() +
+    xlab("Number of home wins") +
+    ggtitle("PPD # home wins \nDavidson")
+  
+  ,ggplot(data.frame(home_wins = all_1718_pred[['Davidson-Beaver']]$home_wins)) + 
+    geom_histogram(aes(x = home_wins)) +
+    geom_vline(xintercept = sum(actual == 1), lty = 2, color = 'red') +
+    theme_classic() +
+    xlab("Number of home wins") +
+    ggtitle("PPD # home wins \nDavidson-Beaver")
+  
+  ,ggplot(data.frame(home_wins = all_1718_pred[['Davidson Power']]$home_wins)) + 
+    geom_histogram(aes(x = home_wins)) +
+    geom_vline(xintercept = sum(actual == 1), lty = 2, color = 'red') +
+    theme_classic() +
+    xlab("Number of home wins") +
+    ggtitle("PPD # home wins \nDavidson Power")
+  , cols = 3)
+dev.off()
+
+
+#### Draws
+pdf(file = "bayesian-implementation/plots/ppd_draws.pdf", width = 10, height = 4)
+multiplot(
+  ggplot(data.frame(n_draws = all_1718_pred[['Davidson']]$n_draws)) + 
+    geom_histogram(aes(x = n_draws)) +
+    geom_vline(xintercept = sum(actual == 3), lty = 2, color = 'red') +
+    theme_classic() +
+    xlab("Number of draws") +
+    ggtitle("PPD # draws \nDavidson")
+  
+  ,ggplot(data.frame(n_draws = all_1718_pred[['Davidson-Beaver']]$n_draws)) + 
+    geom_histogram(aes(x = n_draws)) +
+    geom_vline(xintercept = sum(actual == 3), lty = 2, color = 'red') +
+    theme_classic() +
+    xlab("Number of draws") +
+    ggtitle("PPD # draws \nDavidson-Beaver")
+  
+  ,ggplot(data.frame(n_draws = all_1718_pred[['Davidson Power']]$n_draws)) + 
+    geom_histogram(aes(x = n_draws)) +
+    geom_vline(xintercept = sum(actual == 3), lty = 2, color = 'red') +
+    theme_classic() +
+    xlab("Number of draws") +
+    ggtitle("PPD # draws \nDavidson Power")
+  , cols = 3)
+dev.off()
+
+
+
+###################
+# POSTERIOR DISTS #
+###################
+
+
+all_params_1718 = rbindlist(lapply(names(all_1718_models), function(m){
+  m_extract = extract(all_1718_models[[m]])
+  params = names(m_extract)[!grepl("lambda|lp|gamma_bar|outcome_probs|result_hat",names(m_extract))]
+  
+  post_params = data.frame(matrix(nrow = 4000, ncol = length(params)))
+  for(p in 1:length(params)){
+    post_params[, p] = m_extract[[params[p]]]
+  }
+  names(post_params) = params
+  cbind(model = m, post_params)
+}), use.names = T, fill = T)
+
+
+#### PLOT
+pdf(file = "bayesian-implementation/plots/post_param_dists.pdf", height = 5, width = 8)
+multiplot(
+  ggplot(all_params_1718, aes(fill = model)) + 
+    geom_density(aes(x = delta), alpha = 0.3) +
+    theme_classic() +
+    ggtitle(expression(paste("Posterior dist of ", delta))) + 
+    scale_fill_manual(values = c("#7fc97f", "#beaed4", "#fdc086"))
+  
+  
+  , ggplot(all_params_1718[grepl('Davidson', all_params_1718$model)], aes(fill = model)) + 
+    geom_density(aes(x = sigma), alpha = 0.3) +
+    theme_classic() +
+    ggtitle(expression(paste("Posterior dist of ", sigma)))+ 
+    scale_fill_manual(values = c("#7fc97f", "#beaed4", "#fdc086"))
+  
+  
+  , ggplot(all_params_1718[grepl('Davidson', all_params_1718$model)], aes(fill = model)) + 
+    geom_density(aes(x = theta), alpha = 0.3) +
+    theme_classic() +
+    ggtitle(expression(paste("Posterior dist of ", theta)))+ 
+    scale_fill_manual(values = c("#beaed4", "#fdc086"))
+  
+  
+  , ggplot(all_params_1718[grepl('Davidson', all_params_1718$model)], aes(fill = model)) + 
+    geom_density(aes(x = beta), alpha = 0.3) +
+    theme_classic() +
+    ggtitle(expression(paste("Posterior dist of ", beta)))+ 
+    scale_fill_manual(values = c("#fdc086")) +
+    geom_vline(xintercept = mean(all_params_1718$beta, na.rm = T), lty = 2) +
+    annotate("text", x = 0.4, y = 4, label = expression(paste(beta^PM, " = 0.2")))
+  , cols = 2)
+dev.off()
+
+
+
+
+###################
+#### BETA DISTS ###
+###################
+
+# get all file names
+all_dp_files = list.files('bayesian-implementation/model_fits')[grepl('Power',list.files('bayesian-implementation/model_fits'))]
+
+all_dp_models = list()
+for(i in 1:length(all_dp_files)){
+  season = gsub("[_Davidson power.rds]", "", all_dp_files[i])
+  file = readRDS(paste0('bayesian-implementation/model_fits/',all_dp_files[i]))
+  all_dp_models[[season]] = file
+}
+
+
+names(all_dp_models) = unlist(lapply(names(all_dp_models), function(n) unlist(strsplit(n, "_"))[1]))
+
+
+### get beta dists
+all_params_dp = rbindlist(lapply(names(all_dp_models), function(m){
+  m_extract = extract(all_dp_models[[m]])
+  params = names(m_extract)[!grepl("lambda|lp|gamma_bar|outcome_probs|result_hat",names(m_extract))]
+  
+  post_params = data.frame(matrix(nrow = 4000, ncol = length(params)))
+  for(p in 1:length(params)){
+    post_params[, p] = m_extract[[params[p]]]
+  }
+  names(post_params) = params
+  cbind(model = m, post_params)
+}), use.names = T, fill = T)
+
+
+all_params_dp
+
+
+#### PLOT
+g_legend<-function(a.gplot){
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)}
+
+
+
+plot_delta = ggplot(all_params_dp) + 
+  geom_density(aes(x = delta, fill = model), alpha = 0.3, color = 'white') +
+  theme_classic() +
+  ggtitle(expression(paste("Posterior dist of ", delta))) +
+  theme(legend.position = 'bottom') +
+  geom_density(aes(x = delta, lty = 'ALL')) +
+  geom_vline(xintercept = mean(all_params_dp$delta, na.rm = T), lty = 2, color = 'red') +
+  annotate(geom = 'text', x = 1.1, y = 3.8, label = expression(paste(delta^PM, "= 0.95")))
+
+
+plot_sigma = ggplot(all_params_dp) + 
+  geom_density(aes(x = sigma, fill = model), alpha = 0.3, color = 'white') +
+  theme_classic() +
+  ggtitle(expression(paste("Posterior dist of ", sigma))) +
+  theme(legend.position = 'bottom') +
+  geom_density(aes(x = sigma, lty = 'ALL')) +
+  geom_vline(xintercept = mean(all_params_dp$sigma, na.rm = T), lty = 2, color = 'red') +
+  annotate(geom = 'text', x = 0.4, y = 8, label = expression(paste(sigma^PM, "= 0.34")))
+
+
+plot_theta = ggplot(all_params_dp) + 
+  geom_density(aes(x = theta, fill = model), alpha = 0.3, color = 'white') +
+  theme_classic() +
+  ggtitle(expression(paste("Posterior dist of ", theta))) +
+  geom_density(aes(x = theta, lty = 'ALL')) +
+  geom_vline(xintercept = mean(all_params_dp$theta, na.rm = T), lty = 2, color = 'red') +
+  annotate(geom = 'text', x = 2, y = 2.3, label = expression(paste(theta^PM, "= 1.7")))
+
+
+plot_beta = ggplot(all_params_dp) + 
+  geom_density(aes(x = beta, fill = model), alpha = 0.3, color = 'white') +
+  theme_classic() +
+  ggtitle(expression(paste("Posterior dist of ", beta))) +
+  geom_density(aes(x = beta, lty = 'ALL')) +
+  geom_vline(xintercept = mean(all_params_dp$beta, na.rm = T), lty = 2, color = 'red') +
+  annotate(geom = 'text', x = 0.55, y = 3, label = expression(paste(beta^PM, "= 0.4")))
+
+
+
+pdf(file = "bayesian-implementation/plots/db_allseasons_post_param_dists.pdf", height = 3, width = 8)
+grid.arrange(arrangeGrob(plot_delta + theme(legend.position="none"),
+                         plot_sigma + theme(legend.position="none"),
+                         plot_theta + theme(legend.position="none"),
+                         plot_beta + theme(legend.position="none"),
+                         nrow=1),
+             g_legend(plot_delta), nrow=2,heights=c(10, 1))
+dev.off()
+################################
+
+
+
 
 ###### param summary
 param_summary = Reduce(function(x,y) merge(x,y, all = T, by = 'param'), 
@@ -45,45 +255,8 @@ names(param_summary) = c('param', names(all_1718_models))
 
 
 param_summary = param_summary[order(1:26 <= 20, param_summary[, 3], decreasing = T),]
-kable(param_summary[-26, ], format = 'latex', booktabs = TRUE, digits = 3, row.names = F)
+kable(param_summary[-26, 1:4], format = 'latex', booktabs = TRUE, digits = 3, row.names = F)
 
-
-## next season
-
-param_summary_1819 = Reduce(function(x,y) merge(x,y, all = T, by = 'param'), 
-                       lapply(all_1819_models, function(m){
-                         fit_sum = summary(m)$summary
-                         fit_sum = fit_sum[!grepl('outcome|alpha|result|lp', rownames(fit_sum)),]
-                         lambda = data.frame(param = paste0('lambda[', str_pad(1:20, width = 2, pad = '0'),']')
-                                             , est = fit_sum[grepl('lambda', rownames(fit_sum)),1])
-                         rownames(lambda) = NULL
-                         
-                         #others = fit_sum[!grepl('lambda', rownames(fit_sum)),1]
-                         #others = data.frame(param = names(others), est = others)
-                         
-                         #rbind(lambda, others)
-                         lambda
-                       }))
-names(param_summary_1819) = c('param', names(all_1819_models))
-
-param_summary_1819 = cbind(team = data1819$teams$name, param_summary_1819)
-rankings_1819 = data.frame('Rank' = 1:20
-  ,'Davidson-Beaver' = param_summary_1819[order(param_summary_1819[, 4], decreasing = T),1]
-                           , 'Davidson Power' = param_summary_1819[order(param_summary_1819[, 5], decreasing = T),1]
-                           )
-
-kable(rankings_1819, format = 'latex', booktabs = TRUE, digits = 2, row.names = F)
-
-
-
-ggplot(data.frame(num_draws = num_draws)) + 
-  geom_histogram(aes(num_draws)) + 
-  geom_vline(xintercept = sum(actual == 3))
-
-
-ggplot(data.frame(home_wins = home_wins)) + 
-  geom_histogram(aes(home_wins)) + 
-  geom_vline(xintercept = sum(actual == 1))
 
 
 
@@ -122,167 +295,64 @@ lapply(all_1718_models, print)
 
 
 
-###### gamma dist
+###########
+# LAMBDAS #
+###########
+data1718$teams
 
-K = 20
-sigma_hat = 0.35
-x = seq(0,1, length.out = 500)
-d = data.frame(x = x, dens = dgamma(x, shape = 2*K, rate = 2*K/sigma_hat^2))
-ggplot(d, aes(x = x, y = dens)) + geom_density(stat = 'identity')
+lambdas1718_dp = extract(all_1718_models[['Davidson Power']])$lambda
+colnames(lambdas1718_dp) = data1718$teams$name
+lambdas1718_db = extract(all_1718_models[['Davidson-Beaver']])$lambda
+colnames(lambdas1718_db) = data1718$teams$name
 
+plot_data = rbind(cbind(model = 'Davidson Power', melt(lambdas1718_dp))
+                  , cbind(model = 'Davidson-Beaver', melt(lambdas1718_db)))
+names(plot_data) = c('model', 'iterations', 'team', 'lambda')
 
-
-fit_davidson_power_1718 = all_1718_models[['Davidson Power']]
-extract(fit_davidson_power_1718)$sigma
-ggplot(data.frame(sigma = extract(fit_davidson_power_1718)$sigma), aes(x = sigma)) + geom_density() +
-  ggtitle("Marginal posterior distribution of sigma")
-
-fit_dp_1718_lambda = extract(fit_davidson_power_1718)$lambda
-fit_dp_1718_lambda = data.frame(fit_dp_1718_lambda)
-colnames(fit_dp_1718_lambda) = data1718$teams$name
-
-ggplot(fit_dp_1718_lambda) + 
-  geom_density(aes(x = get('Liverpool'), fill = 'Liverpool'), alpha = 0.3) +
-  geom_density(aes(x = get('Man United'), fill = 'Man United'), alpha = 0.3) +
-  geom_density(alpha = 0.3, aes(x = get('Man City'), fill = 'Man City')) +
-  scale_fill_manual(values = c("Man City" = 'lightblue', "Man United" = "red", "Liverpool" = "yellow")) +
-  ggtitle(expression(paste("Marginal posterior density of ", log(alpha)))) + 
-  xlab(expression(log(alpha)))
-
-plot_data = data.frame(t(apply(fit_dp_1718_lambda, 2, summary)))
-colnames(plot_data) = c('min', 'q1', 'med','mean','q3','max')
-plot_data$team = rownames(plot_data)
-plot_data$team = factor(plot_data$team, levels = plot_data[order(plot_data_db$med, decreasing = T),]$team)
-
-
-pdf(file = "bayesian-implementation/plots/s1718_davidsonpower_lambda.pdf", width = 8, height = 5)
+pdf(file = "bayesian-implementation/plots/s1718_lambdas.pdf", width = 8, height = 4)
 ggplot(plot_data) +
-  geom_segment(aes(x = team, xend = team, y = min, yend = max)) +
-  geom_segment(aes(x = team, xend = team, y = q1, yend = q3), size = 1.5) +
-  geom_point(aes(x = team, y = med)) +
+  geom_boxplot(aes(x = team, y = lambda, color = model), outlier.size = 0) +
   theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ylab(expression(log(alpha))) +
-  ggtitle(expression(paste("Posterior distributions of ",log(alpha), " - Davidson Power Model")))
-dev.off()
-
-
-#########
-
-
-
-fit_davidson_beaver_1718 = all_1718_models[['Davidson-Beaver']]
-extract(fit_davidson_beaver_1718)$sigma
-ggplot(data.frame(sigma = extract(fit_davidson_beaver_1718)$sigma), aes(x = sigma)) + geom_density() +
-  ggtitle("Marginal posterior distribution of sigma")
-
-fit_db_1718_lambda = extract(fit_davidson_beaver_1718)$lambda
-fit_db_1718_lambda = data.frame(fit_db_1718_lambda)
-colnames(fit_db_1718_lambda) = data1718$teams$name
-
-ggplot(fit_db_1718_lambda) + 
-  geom_density(aes(x = get('Liverpool'), fill = 'Liverpool'), alpha = 0.3) +
-  geom_density(aes(x = get('Man United'), fill = 'Man United'), alpha = 0.3) +
-  geom_density(alpha = 0.3, aes(x = get('Man City'), fill = 'Man City')) +
-  scale_fill_manual(values = c("Man City" = 'lightblue', "Man United" = "red", "Liverpool" = "yellow")) +
-  ggtitle(expression(paste("Marginal posterior density of ", log(alpha)))) + 
-  xlab(expression(log(alpha)))
-
-plot_data_db = data.frame(t(apply(fit_db_1718_lambda, 2, summary)))
-colnames(plot_data_db) = c('min', 'q1', 'med','mean','q3','max')
-plot_data_db$team = rownames(plot_data_db)
-plot_data_db$team = factor(plot_data_db$team, levels = plot_data_db[order(plot_data_db$med, decreasing = T),]$team)
-
-
-pdf(file = "bayesian-implementation/plots/s1718_davidsonbeaver_lambda.pdf", width = 8, height = 5)
-ggplot(plot_data_db) +
-  geom_segment(aes(x = team, xend = team, y = min, yend = max)) +
-  geom_segment(aes(x = team, xend = team, y = q1, yend = q3), size = 1.5) +
-  geom_point(aes(x = team, y = med)) +
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ylab(expression(log(alpha))) +
-  ggtitle(expression(paste("Posterior distributions of ",log(alpha), " - Davidson-Beaver")))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position="bottom") +
+  ylab(expression(log(alpha))) + 
+  xlab("Team") +
+  ggtitle(expression(paste("Posterior distributions of ",log(alpha))))
 dev.off()
 
 
 
 
-##### other parameter comparison
-
-all_params_1718 = rbindlist(lapply(names(all_1718_models), function(m){
-  m_extract = extract(all_1718_models[[m]])
-  params = names(m_extract)[!grepl("lambda|lp|gamma_bar|outcome_probs|result_hat",names(m_extract))]
-  
-  post_params = data.frame(matrix(nrow = 4000, ncol = length(params)))
-  for(p in 1:length(params)){
-    post_params[, p] = m_extract[[params[p]]]
-  }
-  names(post_params) = params
-  cbind(model = m, post_params)
-}), use.names = T, fill = T)
 
 
-pdf(file = "bayesian-implementation/plots/post_param_dists.pdf", height = 5, width = 8)
-multiplot(
-ggplot(all_params_1718, aes(fill = model)) + 
-  geom_density(aes(x = delta), alpha = 0.3) +
-  theme_classic() +
-  ggtitle(expression(paste("Posterior dist of ", delta))) + 
-  scale_fill_manual(values = c("#7fc97f", "#beaed4", "#fdc086"))
+###################
+# NEXT SEASON #
+###################
 
+param_summary_1819 = Reduce(function(x,y) merge(x,y, all = T, by = 'param'), 
+                            lapply(all_1819_models, function(m){
+                              fit_sum = summary(m)$summary
+                              fit_sum = fit_sum[!grepl('outcome|alpha|result|lp', rownames(fit_sum)),]
+                              lambda = data.frame(param = paste0('lambda[', str_pad(1:20, width = 2, pad = '0'),']')
+                                                  , est = fit_sum[grepl('lambda', rownames(fit_sum)),1])
+                              rownames(lambda) = NULL
+                              
+                              #others = fit_sum[!grepl('lambda', rownames(fit_sum)),1]
+                              #others = data.frame(param = names(others), est = others)
+                              
+                              #rbind(lambda, others)
+                              lambda
+                            }))
+names(param_summary_1819) = c('param', names(all_1819_models))
 
-, ggplot(all_params_1718[grepl('Davidson', all_params_1718$model)], aes(fill = model)) + 
-  geom_density(aes(x = sigma), alpha = 0.3) +
-  theme_classic() +
-  ggtitle(expression(paste("Posterior dist of ", sigma)))+ 
-  scale_fill_manual(values = c("#7fc97f", "#beaed4", "#fdc086"))
+param_summary_1819 = cbind(team = data1819$teams$name, param_summary_1819)
+rankings_1819 = data.frame('Rank' = 1:20
+                           ,'Davidson-Beaver' = param_summary_1819[order(param_summary_1819[, 4], decreasing = T),1]
+                           , 'Davidson Power' = param_summary_1819[order(param_summary_1819[, 5], decreasing = T),1]
+)
 
-
-, ggplot(all_params_1718[grepl('Davidson', all_params_1718$model)], aes(fill = model)) + 
-  geom_density(aes(x = theta), alpha = 0.3) +
-  theme_classic() +
-  ggtitle(expression(paste("Posterior dist of ", theta)))+ 
-  scale_fill_manual(values = c("#beaed4", "#fdc086"))
-
-
-, ggplot(all_params_1718[grepl('Davidson', all_params_1718$model)], aes(fill = model)) + 
-  geom_density(aes(x = beta), alpha = 0.3) +
-  theme_classic() +
-  ggtitle(expression(paste("Posterior dist of ", beta)))+ 
-  scale_fill_manual(values = c("#fdc086")) +
-  geom_vline(xintercept = mean(all_params_1718$beta, na.rm = T), lty = 2) +
-  annotate("text", x = 0.3, y = 4, label = expression(paste(beta^PM, " = 0.14")))
-, cols = 2)
-dev.off()
+kable(rankings_1819, format = 'latex', booktabs = TRUE, digits = 2, row.names = F)
 
 
 
 
-###### home advantage
-
-pdf(file = "bayesian-implementation/plots/ppd_home_wins.pdf", width = 10, height = 4)
-multiplot(
-ggplot(data.frame(home_wins = all_1718_pred[['Davidson']]$home_wins)) + 
-  geom_histogram(aes(x = home_wins)) +
-  geom_vline(xintercept = sum(actual == 1), lty = 2, color = 'red') +
-  theme_classic() +
-  xlab("Number of home wins") +
-  ggtitle("PPD # home wins \nDavidson")
-
-,ggplot(data.frame(home_wins = all_1718_pred[['Davidson-Beaver']]$home_wins)) + 
-  geom_histogram(aes(x = home_wins)) +
-  geom_vline(xintercept = sum(actual == 1), lty = 2, color = 'red') +
-  theme_classic() +
-  xlab("Number of home wins") +
-  ggtitle("PPD # home wins \nDavidson-Beaver")
-
-,ggplot(data.frame(home_wins = all_1718_pred[['Davidson Power']]$home_wins)) + 
-  geom_histogram(aes(x = home_wins)) +
-  geom_vline(xintercept = sum(actual == 1), lty = 2, color = 'red') +
-  theme_classic() +
-  xlab("Number of home wins") +
-  ggtitle("PPD # home wins \nDavidson Power")
-, cols = 3)
-dev.off()
-
+       

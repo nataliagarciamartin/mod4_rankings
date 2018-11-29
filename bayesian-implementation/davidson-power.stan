@@ -65,14 +65,14 @@ transformed parameters{
 model {
   matrix[K, K] Sigma;
   
-  // exp prior for delta (draws)
-  delta ~ exponential(d);
+  // lognormal prior for delta (draws)
+  delta ~ lognormal(0, 0.25);
   
-  // exp prior for beta (power)
-  beta ~ exponential(b);
+  // beta prior for beta (power)
+  beta ~ beta(2,3);
   
-  // exp prior for theta (home adv)
-  theta ~ exponential(t);
+  // lognorm prior for theta (home adv)
+  theta ~ lognormal(0.7, 0.25);
   
   // gamma hyperprior for variance of lambdas
   sigma ~ gamma(2*K, 2*K/sigma_hat^2);

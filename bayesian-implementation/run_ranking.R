@@ -77,21 +77,31 @@ lapply(names(all_1516_models), function(f){
 
 
 
-
-
-fit_rk_mult = stan(file = 'bayesian-implementation/rao-kupper-mult.stan'
-                    , data = makeRKData(data1718, sigma_hat = 0.4, t = 1)
-                    , chains = 4
-                    , warmup = 1000
-                    , iter = 2000
-                    , cores = 2
-                    , refresh = 0)
-print(fit_rk_mult)
-
-
-colSums(extract(fit_davidson_power)$lambda)/4000
-
-summary(fit_davidson_power)
-
-
-print(fit_davidson_beaver)
+# 
+# 
+# fit_rk_mult = stan(file = 'bayesian-implementation/rao-kupper-mult.stan'
+#                     , data = makeRKData(data1718, sigma_hat = 0.4, t = 1)
+#                     , chains = 4
+#                     , warmup = 1000
+#                     , iter = 2000
+#                     , cores = 2
+#                     , refresh = 0)
+# print(fit_rk_mult)
+# 
+# 
+# fit_davidson_power_1718 = stan(file = 'bayesian-implementation/davidson-power.stan'
+#                    , data = makeDavidsonData(data1718, sigma_hat = 0.4, t = 1)
+#                    , chains = 4
+#                    , warmup = 1000
+#                    , iter = 2000
+#                    , cores = 2
+#                    , refresh = 0)
+# print(fit_davidson_power_1718)
+# 
+# 
+# colSums(extract(fit_davidson_power)$lambda)/4000
+# 
+# summary(fit_davidson_power)
+# 
+# 
+# print(fit_davidson_beaver)
