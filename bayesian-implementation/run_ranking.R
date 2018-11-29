@@ -39,7 +39,7 @@ all_1718_models = fitAllModels(data1718)
 lapply(names(all_1718_models), function(f){
   print(f)
   temp = all_1718_models[[f]]
-  save(temp, file = paste0('bayesian-implementation/model_fits/s1718_', f, '.RData'))
+  saveRDS(temp, file = paste0('bayesian-implementation/model_fits/s1718_', f, '.rds'))
 })
 
 ######### Fit 18-19 season models  #########
@@ -49,7 +49,7 @@ all_1819_models = fitAllModels(data1819)
 lapply(names(all_1819_models), function(f){
   print(f)
   temp = all_1819_models[[f]]
-  save(temp, file = paste0('bayesian-implementation/model_fits/s1819_', f, '.RData'))
+  saveRDS(temp, file = paste0('bayesian-implementation/model_fits/s1819_', f, '.rds'))
 })
 
 
@@ -60,7 +60,7 @@ all_1617_models = fitAllModels(data1617)
 lapply(names(all_1617_models), function(f){
   print(f)
   temp = all_1617_models[[f]]
-  save(temp, file = paste0('bayesian-implementation/model_fits/s1617_', f, '.RData'))
+  saveRDS(temp, file = paste0('bayesian-implementation/model_fits/s1617_', f, '.rds'))
 })
 
 
@@ -71,7 +71,7 @@ all_1516_models = fitAllModels(data1516)
 lapply(names(all_1516_models), function(f){
   print(f)
   temp = all_1516_models[[f]]
-  save(temp, file = paste0('bayesian-implementation/model_fits/s1516_', f, '.RData'))
+  saveRDS(temp, file = paste0('bayesian-implementation/model_fits/s1516_', f, '.rds'))
 })
 
 

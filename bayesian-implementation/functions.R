@@ -47,7 +47,7 @@ makeDavidsonData = function(model_data, sigma_hat = NULL, d = NULL, b = NULL, t 
   
   #flat prior if prior is null
   if(is.null(sigma_hat)){
-    sigma_hat = 0.2
+    sigma_hat = 0.5
   }
   
   return(list(
@@ -74,7 +74,7 @@ makeRKData = function(model_data, sigma_hat = NULL, g = NULL, t = NULL){
   
   #flat prior if prior is null
   if(is.null(sigma_hat)){
-    sigma_hat = 0.3
+    sigma_hat = 0.5
   }
   
   return(list(

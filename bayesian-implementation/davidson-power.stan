@@ -74,10 +74,11 @@ model {
   // exp prior for theta (home adv)
   theta ~ exponential(t);
   
-  // multivariate norm prior for alpha (strength)
+  // gamma hyperprior for variance of lambdas
   sigma ~ gamma(2*K, 2*K/sigma_hat^2);
   Sigma = diag_matrix(rep_vector(sigma ^ 2, K));
   
+  // multivariate norm prior for alpha (strength)
   lambda ~ multi_normal(rep_vector(0, K), Sigma);
   
   //loop over all the games
@@ -85,6 +86,7 @@ model {
     result[r] ~ categorical(outcome_probs[r]);
   }
 }
+
 
 generated quantities{
   int result_hat[N];
