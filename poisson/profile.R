@@ -8,28 +8,26 @@ variablepower <- function(data, power_vector){
   return(dev)
 }
 
-vector<- seq(from = 0.1, to = 0.6, by = 0.01)
-deviance <- variablepower(season2018, vector)
-min(deviance)
-deviance[24]
-vector[24]
-dataframe<-data.frame(vector, deviance)
-# minimum deviance at 0.33
+
 library(ggplot2)
-ggplot(dataframe,aes(vector,deviance))+geom_line()+geom_point()+geom_hline(yintercept = deviance[24], linetype="dashed")+ylim(691,700)
+vector<- seq(from = 0.1, to = 0.9, by = 0.01)
 
-###########################################
+deviance2016 <- variablepower(season2016, vector)
+dataframe2016<-data.frame(vector, deviance2016)
+plot2016<- ggplot(dataframe,aes(vector,deviance2016))+geom_line()+labs(x = "Power", y="Deviance (2016)")+theme(axis.title=element_text(size=10))#+geom_point()#+geom_hline(yintercept = deviance[which.min(deviance2016)], linetype="dashed")
 
-season.data<-expanded2018
-season.data$X <- makeX(season.data, power=1/3)
-nteams <- ncol(season.data$X)
-season.data$home <- as.numeric(season.data$FTR == "H")
-season.data$draw <- as.numeric(season.data$FTR == "D")
-thefit <- gnm(count ~ -1 + X + home + draw,
-              eliminate = match,
-              family = poisson,
-              data = season.data, constrain = "West Ham")
-prof<-profile(thefit)
-plot(prof)
-confint(prof)
+deviance2017 <- variablepower(season2017, vector)
+dataframe2017<-data.frame(vector, deviance2017)
+plot2017<- ggplot(dataframe,aes(vector,deviance2017))+geom_line()+labs(x = "Power", y="Deviance (2017)")+theme(axis.title=element_text(size=10))#+geom_point()#+geom_hline(yintercept = deviance[which.min(deviance2017)], linetype="dashed")
+
+deviance2018 <- variablepower(season2018, vector)
+dataframe2018<-data.frame(vector, deviance2018)
+plot2018<- ggplot(dataframe,aes(vector,deviance2018))+geom_line()+labs(x = "Power", y="Deviance (2018)")+theme(axis.title=element_text(size=10))#+geom_point()#+geom_hline(yintercept = deviance[which.min(deviance2018)], linetype="dashed")
+
+deviance2019 <- variablepower(season2019, vector)
+dataframe2019<-data.frame(vector, deviance2019)
+plot2019<- ggplot(dataframe,aes(vector,deviance2019))+geom_line()+labs(x = "Power", y="Deviance (2019)")+theme(axis.title=element_text(size=10))#+#geom_point()#+geom_hline(yintercept = deviance[which.min(deviance2019)], linetype="dashed")
+
+require(gridExtra)
+grid.arrange(plot2016, plot2017, plot2018, plot2019, ncol=4)
 
